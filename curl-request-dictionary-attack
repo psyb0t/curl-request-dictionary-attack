@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+source "$(dirname $0)/functions.sh"
+source "$(dirname $0)/config.sh"
+
+do_urlencode=1
+curl_args=()
+for arg in "$@"; do
+  if [[ $(printf "%s" "$arg" | grep -i "content-type") != "" ]]; then
+    if [[ $(printf "%s" "$arg" | grep -i "urlencoded") == "" ]]; then
+      do_urlencode=0
+    fi
+  fi
+
+  curl_args+=("$arg")
+done
+
+total_field_num="${#dict_fields[@]}"
+if [[ ! $(( "$total_field_num" % 2 )) -eq 0 ]]; then
+  echo "Invalid dict_fields"
+  exit 1
+fi
+
+attack curl_args[@] "0"
+
+exit 0

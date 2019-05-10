@@ -1,0 +1,6 @@
+max_threads=100
+dict_fields=(
+  "user_input" "./usernames.txt"
+  "password_input" "./passwords.txt"
+)
+expect_grep_expr=("-i" "welcome")
