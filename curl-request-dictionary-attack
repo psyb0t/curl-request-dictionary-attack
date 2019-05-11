@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-source "./config.sh"
-
 curl_request () {
   local _curl_args=("${!1}")
   local _response=$(curl "${_curl_args[@]}" | tr -d "\n")
@@ -92,9 +90,17 @@ required_software () {
 
 required_software "curl" "tr" "sed"
 
+config_file_path="./config.sh"
+if [[ ! -f "./config.sh" ]]; then
+  printf "inexistent config file: %s\n" "$config_file_path"
+  exit 1
+fi
+
+source "$config_file_path"
+
 if [[ "$#" -eq 0 ]]; then
   echo "try adding some curl options (curl --help)"
-  exit 0
+  exit 1
 fi
 
 do_urlencode=0
