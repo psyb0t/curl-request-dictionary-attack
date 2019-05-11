@@ -35,7 +35,7 @@ expect_grep_expr=("-i" "welcome")
 
 
 ```
-./curl-request-dictionary-attack -skL -H "Referer: http://example.com/" --data "user={user_input}&password={password_input}&im_not_a_robot=1" "https://example.com/login"
+curl-request-dictionary-attack -skL -H "Referer: http://example.com/" --data "user={user_input}&password={password_input}&im_not_a_robot=1" "https://example.com/login"
 ```
 
 whenever the `expect_grep_expr` does not return an empty string(based on the curl response) the entire curl command gets printed out
