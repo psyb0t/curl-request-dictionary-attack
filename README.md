@@ -6,13 +6,13 @@ Bash script to perform dictionary attacks on any request via simple template-lik
 ## INSTALLATION
 
 ```
-curl https://raw.githubusercontent.com/psyb0t/curl-request-dictionary-attack/master/curl-request-dictionary-attack > /usr/local/bin && chmod +x /usr/local/bin/curl-request-dictionary-attack
+curl -s https://raw.githubusercontent.com/psyb0t/curl-request-dictionary-attack/master/curl-request-dictionary-attack > /usr/local/bin && chmod +x /usr/local/bin/curl-request-dictionary-attack
 ```
 
 or
 
 ```
-echo 'alias curl-request-dictionary-attack="curl https://raw.githubusercontent.com/psyb0t/curl-request-dictionary-attack/master/curl-request-dictionary-attack | bash"' >> ~/.bashrc && source ~/.bashrc
+echo 'alias curl-request-dictionary-attack="curl -s https://raw.githubusercontent.com/psyb0t/curl-request-dictionary-attack/master/curl-request-dictionary-attack | bash"' >> ~/.bashrc && source ~/.bashrc
 ```
 
 ## USAGE
