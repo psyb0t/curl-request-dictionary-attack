@@ -1,13 +1,108 @@
 #!/usr/bin/env bash
-source "$(dirname $0)/functions.sh"
-source "$(dirname $0)/config.sh"
+source "./config.sh"
 
-do_urlencode=1
+curl_request () {
+  local _curl_args=("${!1}")
+  local _response=$(curl "${_curl_args[@]}" | tr -d "\n")
+
+  if [[ $(printf "%b" "$_response" | grep "${expect_grep_expr[@]}") != "" ]]; then
+    echo "curl ${_curl_args[@]}"
+  fi
+}
+
+attack () {
+  local _curl_args=("${!1}")
+  local _curr_field_num="$2"
+  local _next_field_num=$(( "$_curr_field_num" + 2 ))
+  local _num_children=0
+
+  local _curr_field_name="${dict_fields[$_curr_field_num]}"
+  local _curr_field_file="${dict_fields[$_curr_field_num+1]}"
+
+  if [[ ! -f "$_curr_field_file" ]]; then
+    printf "inexistent file: %s\n" "$_curr_field_file"
+    exit 1
+  fi
+
+  while read line; do
+    if [[ "$do_urlencode" -eq 1 ]]; then
+      line=$(urlencode "$line")
+    fi
+
+    line=$(printf "%q" "$line")
+
+    local _tmp_curl_args=()
+    for arg in "${_curl_args[@]}"; do
+      _tmp_curl_args+=($(printf "%s" "$arg" | sed "s/{$_curr_field_name}/$line/g"))
+    done
+
+    _num_children=$(( $(ps --no-headers -o pid --ppid=$$ | wc -w) - 1 ))
+
+    if [[ "$_num_children" -eq "$max_threads" ]]; then
+      while [[ "$_num_children" -gt $(( "$max_threads" / 2 )) ]]; do
+        _num_children=$(( $(ps --no-headers -o pid --ppid=$$ | wc -w) - 1 ))
+        sleep 1
+      done
+    fi
+
+    if [[ "$_curr_field_num" -eq $(( "$total_field_num" - 2 )) ]]; then
+      curl_request _tmp_curl_args[@]&
+    else
+      attack _tmp_curl_args[@] "$_next_field_num"
+    fi
+  done < "$_curr_field_file"
+}
+
+# from https://gist.github.com/cdown/1163649
+urlencode() {
+  local result=""
+
+  old_lc_collate=$LC_COLLATE
+  LC_COLLATE=C
+
+  local length="${#1}"
+  for (( i = 0; i < length; i++ )); do
+    local c="${1:i:1}"
+    case $c in
+      [a-zA-Z0-9.~_-]) result+="$c" ;;
+      *) result+=$(printf '%%%02X' "'$c") ;;
+    esac
+  done
+
+  LC_COLLATE=$old_lc_collate
+
+  printf '%b' "$result"
+}
+
+# from https://gist.github.com/cdown/1163649
+urldecode() {
+  local url_encoded="${1//+/ }"
+  printf '%b' "${url_encoded//%/\\x}"
+}
+
+required_software () {
+  for software in "$@"; do
+    which "$software" > /dev/null
+    if [[ ! "$?" -eq 0 ]]; then
+      printf "required software not found: %s\n" "$software"
+      exit 1
+    fi
+  done
+}
+
+required_software "curl" "tr" "sed"
+
+if [[ "$#" -eq 0 ]]; then
+  echo "try adding some curl options (curl --help)"
+  exit 0
+fi
+
+do_urlencode=0
 curl_args=()
 for arg in "$@"; do
   if [[ $(printf "%s" "$arg" | grep -i "content-type") != "" ]]; then
-    if [[ $(printf "%s" "$arg" | grep -i "urlencoded") == "" ]]; then
-      do_urlencode=0
+    if [[ $(printf "%s" "$arg" | grep -i "urlencoded") != "" ]]; then
+      do_urlencode=1
     fi
   fi
 
@@ -16,7 +111,7 @@ done
 
 total_field_num="${#dict_fields[@]}"
 if [[ ! $(( "$total_field_num" % 2 )) -eq 0 ]]; then
-  echo "Invalid dict_fields"
+  echo "invalid dict_fields"
   exit 1
 fi
 
