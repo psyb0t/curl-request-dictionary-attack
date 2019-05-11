@@ -12,7 +12,7 @@ curl -s https://raw.githubusercontent.com/psyb0t/curl-request-dictionary-attack/
 or
 
 ```
-echo 'alias curl-request-dictionary-attack="curl -s https://raw.githubusercontent.com/psyb0t/curl-request-dictionary-attack/master/curl-request-dictionary-attack | bash"' >> ~/.bashrc && source ~/.bashrc
+echo 'alias curl-request-dictionary-attack="curl -s https://raw.githubusercontent.com/psyb0t/curl-request-dictionary-attack/master/curl-request-dictionary-attack | bash -s --"' >> ~/.bashrc && source ~/.bashrc
 ```
 
 ## USAGE
