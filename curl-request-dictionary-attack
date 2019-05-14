@@ -8,11 +8,19 @@ curl_request () {
   fi
 }
 
+curl_children=()
+get_running_children () {
+  for (( i=0; i<"${#curl_children[@]}"; i++ )); do
+    if [[ $(ps -p "${curl_children[$i]}" -o pid --no-headers) != "" ]]; then
+      printf "%s\n" "${curl_children[$i]}"
+    fi
+  done
+}
+
 attack () {
   local _curl_args=("${!1}")
   local _curr_field_num="$2"
   local _next_field_num=$(( "$_curr_field_num" + 2 ))
-  local _num_children=0
 
   local _curr_field_name="${dict_fields[$_curr_field_num]}"
   local _curr_field_file="${dict_fields[$_curr_field_num+1]}"
@@ -34,17 +42,19 @@ attack () {
       _tmp_curl_args+=($(printf "%s" "$arg" | sed s/"{$_curr_field_name}"/"$line"/g))
     done
 
-    _num_children=$(( $(ps --no-headers -o pid --ppid=$$ | wc -w) - 1 ))
+    running_curl_children=($(get_running_children))
+    curl_children=("${running_curl_children[@]}")
 
-    if [[ "$_num_children" -eq "$max_threads" ]]; then
-      while [[ "$_num_children" -gt $(( "$max_threads" / 2 )) ]]; do
-        _num_children=$(( $(ps --no-headers -o pid --ppid=$$ | wc -w) - 1 ))
-        sleep 1
-      done
-    fi
+    while [[ "${#curl_children[@]}" -gt "$max_threads" ]]; do
+      sleep 1
+
+      running_curl_children=($(get_running_children))
+      curl_children=("${running_curl_children[@]}")
+    done
 
     if [[ "$_curr_field_num" -eq $(( "$total_field_num" - 2 )) ]]; then
       curl_request _tmp_curl_args[@]&
+      curl_children+=("$!")
     else
       attack _tmp_curl_args[@] "$_next_field_num"
     fi
