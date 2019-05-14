@@ -22,16 +22,16 @@ attack () {
     exit 1
   fi
 
-  while read line; do
+  while read -r line; do
     if [[ "$do_urlencode" -eq 1 ]]; then
       line=$(urlencode "$line")
     fi
 
-    line=$(printf "%q" "$line")
+    line=$(printf "%q" "$line" | sed "s#/#\\\/#g")
 
     local _tmp_curl_args=()
     for arg in "${_curl_args[@]}"; do
-      _tmp_curl_args+=($(printf "%s" "$arg" | sed "s/{$_curr_field_name}/$line/g"))
+      _tmp_curl_args+=($(printf "%s" "$arg" | sed s/"{$_curr_field_name}"/"$line"/g))
     done
 
     _num_children=$(( $(ps --no-headers -o pid --ppid=$$ | wc -w) - 1 ))
